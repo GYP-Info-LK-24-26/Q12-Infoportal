@@ -1,9 +1,13 @@
-import Database from 'better-sqlite3'
-import { DB_PATH } from '$env/static/private'
+import { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } from '$env/static/private'
+import mariadb, { type PoolConfig } from 'mariadb';
 
-const db = new Database(DB_PATH, { fileMustExist: true, readonly: true, verbose: console.log });
-//db.pragma("journal_mode = WAL");
+const config: PoolConfig = {
+    host: DB_HOST,
+    port: +DB_PORT,
+    user: DB_USER,
+    password: DB_PASSWORD,
+    database: DB_NAME,
+    trace: process.env.NODE_ENV != 'production',
+}
 
-export function getDB() {
-    return db;
-} 
+export const db = mariadb.createPool(config);

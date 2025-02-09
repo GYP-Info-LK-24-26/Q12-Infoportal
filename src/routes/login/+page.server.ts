@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit'
 import jwt from 'jsonwebtoken'
 import type { Student } from '$lib/server/db/types'
-import { getDB } from '$lib/server/db/db'
+import { db } from '$lib/server/db/db'
 import { JWT_ACCESS_SECRET } from '$env/static/private'
 import type { PageServerLoad } from './$types.js'
 
@@ -30,27 +30,21 @@ export const actions = {
             };
         }
 
-        const test = {
-            firstName: formData.firstName,
-            firstName1: `${formData.firstName} %`,
-            firstName2: `% ${formData.firstName}`,
-            lastName: formData.lastName,
-            lastName1: `${formData.lastName} %`,
-            lastName2: `% ${formData.lastName}`,
-            birth: formData.birth
-        };
+        const rs = await db.query("SELECT * FROM Student WHERE (firstName = ? OR firstName LIKE ? OR firstName LIKE ?) AND (lastName = ? OR lastName LIKE ? OR lastName LIKE ?) AND birth = ?", [
+            formData.firstName, `${formData.firstName} %`, `% ${formData.firstName}`, formData.lastName, `${formData.lastName} %`, `% ${formData.lastName}`, formData.birth
+        ]) as Student[];
 
-        const db = getDB();
-        const select = db.prepare("SELECT * FROM Student WHERE (firstName = $firstName OR firstName LIKE $firstName1 OR firstName LIKE $firstName2) AND (lastName = $lastName OR lastName LIKE $lastName1 OR lastName LIKE $lastName2) AND birth = $birth");
-        const student = select.get<Student>(test);
-        if (!student) {
+        if (!rs) {
             return {
                 error: "Ungültige Daten!"
             };
         }
+        
+        const student = rs[0];
 
         event.locals.student = student;
 
+        let start = new Date().getMilliseconds();
         event.cookies.set("token", jwt.sign({ studentId: student.id }, JWT_ACCESS_SECRET, { expiresIn: '7d' }), {
             path: "/",
             httpOnly: true,
@@ -58,6 +52,7 @@ export const actions = {
             secure: process.env.NODE_ENV == 'production',
             maxAge: 7 * 24 * 60 * 60
         });
+        console.log(`${new Date().getMilliseconds() - start} ms`);
         redirect(302, '/');
     }
 };

@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import type {Student} from "$lib/server/db/types";
+import type { Student } from "$lib/server/db/types";
 
 declare global {
 	namespace App {

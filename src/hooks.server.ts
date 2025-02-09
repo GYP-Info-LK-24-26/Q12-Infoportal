@@ -2,7 +2,7 @@ import type { Handle } from '@sveltejs/kit';
 import { JWT_ACCESS_SECRET } from '$env/static/private'
 import jwt from 'jsonwebtoken';
 import type { Student } from '$lib/server/db/types';
-import { getDB } from '$lib/server/db/db';
+import { db } from '$lib/server/db/db';
 
 export const handle: Handle = async ({ event, resolve }) => {
     const token = event.cookies.get("token");
@@ -11,16 +11,18 @@ export const handle: Handle = async ({ event, resolve }) => {
         try {
             const jwtUser = jwt.verify(token, JWT_ACCESS_SECRET);
             if (typeof jwtUser == 'string') {
-                throw new Error("Something went wrong");
+                throw new Error('Something went wrong');
             }
 
-            const db = getDB();
-            const stmt = db.prepare("SELECT * FROM Student WHERE id = $studentId");
-            const student = stmt.get<Student>(jwtUser);
+            const rs = await db.query('SELECT * FROM Student WHERE id = ?', [
+                jwtUser.studentId
+            ]) as Student[];
 
-            if (!student) {
-                throw new Error("User not found");
+            if (!rs) {
+                throw new Error('User not found');
             }
+
+            const student = rs[0];
 
             event.locals.student = student;
         } catch (error) {
@@ -30,4 +32,4 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
 
     return resolve(event);
-};
+}; 

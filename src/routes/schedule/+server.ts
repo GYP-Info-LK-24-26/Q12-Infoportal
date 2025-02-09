@@ -1,16 +1,13 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import type { LessonTime, Lesson, Student } from '$lib/server/db/types';
-import { getDB } from '$lib/server/db/db';
+import type { LessonTime, Student } from '$lib/server/db/types';
+import { db } from '$lib/server/db/db';
 
-function getLessonTimes(): {start: string, end: string}[] {
-    const db = getDB();
-    const stmt = db.prepare('SELECT * FROM LessonTime ORDER BY number');
-    const lessonTimes = stmt.all<LessonTime>();
-    return lessonTimes.map(obj => ({ start: obj.start, end: obj.end }));
+function getLessonTimes(): Promise<{start: string, end: string}[]> {
+    return db.query('SELECT start, end FROM LessonTime');
 }
 
-function getDaysOfTheWeek(): string[] {
-    return [ 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag' ];
+function getDaysOfTheWeek(): Promise<string[]> {
+    return db.query('SELECT name FROM Day');
 }
 
 type ScheduleData = {
@@ -29,21 +26,22 @@ type LessonData = {
     subject: string
 };
 
-function getLessons(student: Student, daysOfTheWeek: string[]): ScheduleData {
-    const db = getDB();
-    const stmt = db.prepare(
-        'SELECT Lesson.day - 1 AS day, Lesson.lessonTime - 1 AS time, Lesson.teacher, Lesson.room, '
+async function getLessons(student: Student, daysOfTheWeek: string[]): Promise<ScheduleData> {
+    const rs = await db.query(
+        'SELECT Lesson.day - 1 AS day, Lesson.lessonTime - 1 AS time, Teacher.abbreviation AS teacher, Lesson.room, '
         + 'Course.name AS course, Course.subject FROM Lesson '
         + 'INNER JOIN Course ON Lesson.course = Course.id ' 
         + 'INNER JOIN StudentCourse ON Lesson.course = StudentCourse.course '
-        + 'WHERE StudentCourse.student = $studentId'
-    );
-    const lessonDataArray = stmt.all<LessonData>({ studentId: student.id });
+        + 'INNER JOIN Teacher ON Lesson.teacher = Teacher.id '
+        + 'WHERE StudentCourse.student = ?', [
+            student.id
+        ]
+    ) as LessonData[];
     let scheduleData: ScheduleData = [];
     for (let i = 0; i < daysOfTheWeek.length; i++) {
         scheduleData[i] = [];
     }
-    for (var lessonData of lessonDataArray) {
+    for (let lessonData of rs) {
         scheduleData[lessonData.day][lessonData.time] = {
             teacher: lessonData.teacher,
             room: lessonData.room,
@@ -59,12 +57,12 @@ export const GET: RequestHandler = async ({ locals }) => {
         error(401, 'Unauthorized');
     }
 
-    const daysOfTheWeek = getDaysOfTheWeek();
+    const daysOfTheWeek = await getDaysOfTheWeek();
 
     const data = {
-        lessonTimes: getLessonTimes(),
+        lessonTimes: await getLessonTimes(),
         daysOfTheWeek: daysOfTheWeek,
-        lessons: getLessons(locals.student, daysOfTheWeek)
+        lessons: await getLessons(locals.student, daysOfTheWeek)
     };
 
     return json(data);

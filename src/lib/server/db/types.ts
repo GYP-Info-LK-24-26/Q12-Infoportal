@@ -2,7 +2,7 @@ export interface Student {
     id: number;
     firstName: string;
     lastName: string;
-    birth: string;
+    birth: Date;
     confession: string;
 };
 
@@ -27,7 +27,7 @@ export interface Day {
 };
 
 export interface LessonTime {
-    number: number;
+    id: number;
     start: string;
     end: string;
 };
@@ -52,9 +52,18 @@ export interface StudentCourse {
 };
 
 export interface Substitution {
+    id: number,
     lesson: number,
+    date: Date,
     substituteTeacher: number,
     substituteCourse: number,
     substituteRoom: string,
     note: string
 };
+
+export interface PushSubscription {
+    id: number,
+    endpoint: string,
+    p256dh: string,
+    auth: string
+}
