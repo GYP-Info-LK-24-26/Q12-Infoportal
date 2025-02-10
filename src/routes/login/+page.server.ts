@@ -34,7 +34,7 @@ export const actions = {
             formData.firstName, `${formData.firstName} %`, `% ${formData.firstName}`, formData.lastName, `${formData.lastName} %`, `% ${formData.lastName}`, formData.birth
         ]) as Student[];
 
-        if (!rs) {
+        if (rs.length == 0) {
             return {
                 error: "Ungültige Daten!"
             };
@@ -44,7 +44,6 @@ export const actions = {
 
         event.locals.student = student;
 
-        let start = new Date().getMilliseconds();
         event.cookies.set("token", jwt.sign({ studentId: student.id }, JWT_ACCESS_SECRET, { expiresIn: '7d' }), {
             path: "/",
             httpOnly: true,
@@ -52,7 +51,6 @@ export const actions = {
             secure: process.env.NODE_ENV == 'production',
             maxAge: 7 * 24 * 60 * 60
         });
-        console.log(`${new Date().getMilliseconds() - start} ms`);
         redirect(302, '/');
     }
 };

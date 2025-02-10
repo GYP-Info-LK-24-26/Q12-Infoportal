@@ -55,6 +55,8 @@ export interface Substitution {
     id: number,
     lesson: number,
     date: Date,
+    dropped: boolean,
+    publishedAt: number,
     substituteTeacher: number,
     substituteCourse: number,
     substituteRoom: string,

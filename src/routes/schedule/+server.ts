@@ -1,5 +1,5 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import type { LessonTime, Student } from '$lib/server/db/types';
+import type { Day, Student } from '$lib/server/db/types';
 import { db } from '$lib/server/db/db';
 
 function getLessonTimes(): Promise<{start: string, end: string}[]> {
@@ -7,7 +7,8 @@ function getLessonTimes(): Promise<{start: string, end: string}[]> {
 }
 
 function getDaysOfTheWeek(): Promise<string[]> {
-    return db.query('SELECT name FROM Day');
+    const rs = db.query('SELECT name FROM Day') as Promise<Day[]>;
+    return rs.then(days => days.map(day => day.name));
 }
 
 type ScheduleData = {
@@ -15,7 +16,7 @@ type ScheduleData = {
     room: string,
     course: string,
     subject: string
-}[][]
+}[][];
 
 type LessonData = {
     day: number,

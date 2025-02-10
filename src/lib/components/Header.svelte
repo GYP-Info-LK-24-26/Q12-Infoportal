@@ -1,6 +1,4 @@
 <script>
-    import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
     import Auth from './Auth.svelte';
 </script>
 

@@ -7,7 +7,7 @@ const config: PoolConfig = {
     user: DB_USER,
     password: DB_PASSWORD,
     database: DB_NAME,
-    trace: process.env.NODE_ENV != 'production',
+    trace: process.env.NODE_ENV != 'production'
 }
 
 export const db = mariadb.createPool(config);

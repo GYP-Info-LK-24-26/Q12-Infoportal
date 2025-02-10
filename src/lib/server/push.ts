@@ -1,11 +1,12 @@
 import webpush from 'web-push';
 import { db } from '$lib/server/db/db'
-import type { Subscription } from '$lib/server/db/types'
+import type { PushSubscription } from '$lib/server/db/types'
+import { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } from '$env/static/private';
 
 webpush.setVapidDetails(
     'mailto:you@example.com',
-    process.env.VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
 );
 
 export function sendPushNotifications(title: string, content: string) {

@@ -3,6 +3,8 @@ import { JWT_ACCESS_SECRET } from '$env/static/private'
 import jwt from 'jsonwebtoken';
 import type { Student } from '$lib/server/db/types';
 import { db } from '$lib/server/db/db';
+import cron from 'node-cron';
+import { fetchSubstitutions } from '$lib/server/fetchSubstitutions';
 
 export const handle: Handle = async ({ event, resolve }) => {
     const token = event.cookies.get("token");
@@ -18,13 +20,11 @@ export const handle: Handle = async ({ event, resolve }) => {
                 jwtUser.studentId
             ]) as Student[];
 
-            if (!rs) {
+            if (rs.length == 0) {
                 throw new Error('User not found');
             }
 
-            const student = rs[0];
-
-            event.locals.student = student;
+            event.locals.student = rs[0];
         } catch (error) {
             event.cookies.delete('token', { path: '/' });
             console.log(error)
@@ -32,4 +32,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
 
     return resolve(event);
-}; 
+};
+
+cron.schedule('*/10 * * * *', fetchSubstitutions);
